@@ -115,9 +115,4 @@ class LowestPriceEnquiry implements PromotionEnquiryInterface
     {
         $this->promotionName = $promotionName;
     }
-
-    public function jsonSerialize(): array
-    {
-        return get_object_vars($this);
-    }
 }
