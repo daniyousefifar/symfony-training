@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class ProductsController extends AbstractController
 {
     public function __construct(
-        private ProductRepository $repository,
+        private ProductRepository      $repository,
         private EntityManagerInterface $entityManager
     )
     {
@@ -52,12 +52,12 @@ class ProductsController extends AbstractController
         $promotions = $this->entityManager->getRepository(Promotion::class)->findValidForProduct(
             $product,
             date_create_immutable($lowestPriceEnquiry->getRequestDate())
-        );
+        ); // Handling if promotions not found
 
-        $modifiedEnquiry = $promotionFilter->apply($lowestPriceEnquiry, $promotions);
+        $modifiedEnquiry = $promotionFilter->apply($lowestPriceEnquiry, ...$promotions);
 
         $responseContent = $serializer->serialize($modifiedEnquiry, 'json');
 
-        return new Response($responseContent, 200);
+        return new Response($responseContent, 200, ['Content-Type' => 'application/json']);
     }
 }
