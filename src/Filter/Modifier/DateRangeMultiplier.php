@@ -7,7 +7,6 @@ use App\Entity\Promotion;
 
 class DateRangeMultiplier implements PriceModifierInterface
 {
-
     public function modify(int $price, int $quantity, Promotion $promotion, PromotionEnquiryInterface $enquiry): int
     {
         $requestDate = date_create($enquiry->getRequestDate());

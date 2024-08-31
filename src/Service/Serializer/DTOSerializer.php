@@ -3,7 +3,6 @@
 namespace App\Service\Serializer;
 
 use App\Event\AfterDtoCreatedEvent;
-use Doctrine\ORM\Mapping\Driver\AttributeReader;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Mapping\Factory\ClassMetadataFactory;
 use Symfony\Component\Serializer\Mapping\Loader\AttributeLoader;

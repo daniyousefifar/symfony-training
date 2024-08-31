@@ -7,17 +7,15 @@ use App\DTO\LowestPriceEnquiry;
 use App\Filter\PromotionFilterInterface;
 use App\Repository\ProductRepository;
 use App\Service\Serializer\DTOSerializer;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 class ProductsController extends AbstractController
 {
-    public function __construct(
-        private ProductRepository      $repository,
-    )
+    public function __construct(private ProductRepository $repository)
     {
         // ...
     }
@@ -28,7 +26,7 @@ class ProductsController extends AbstractController
         int                      $id,
         DTOSerializer            $serializer,
         PromotionFilterInterface $promotionFilter,
-        PromotionCache $promotionCache
+        PromotionCache           $promotionCache
     ): Response
     {
         /** @var LowestPriceEnquiry $lowestPriceEnquiry */
@@ -48,6 +46,6 @@ class ProductsController extends AbstractController
 
         $responseContent = $serializer->serialize($modifiedEnquiry, 'json');
 
-        return new Response($responseContent, 200, ['Content-Type' => 'application/json']);
+        return new JsonResponse(data: $responseContent, status: Response::HTTP_OK, json: true);
     }
 }
