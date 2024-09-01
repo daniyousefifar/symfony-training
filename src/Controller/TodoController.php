@@ -15,8 +15,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 #[Route("/api", "api_", format: "json")]
+#[IsGranted("IS_AUTHENTICATED")]
 class TodoController extends AbstractController
 {
     #[Route('/todos', name: 'todos', methods: ["GET"])]

@@ -6,10 +6,13 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+use Symfony\Component\Security\Core\Exception\InsufficientAuthenticationException;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 class ExceptionListener implements EventSubscriberInterface
@@ -55,6 +58,14 @@ class ExceptionListener implements EventSubscriberInterface
                 'status' => 'error',
                 'message' => $exception->getMessage(),
             ], Response::HTTP_METHOD_NOT_ALLOWED, $exception->getHeaders());
+        } elseif (
+            $exception instanceof HttpException &&
+            $exception->getPrevious() instanceof AuthenticationException
+        ) {
+            $response = new JsonResponse([
+                'status' => 'error',
+                'message' => $exception->getMessage(),
+            ], Response::HTTP_UNAUTHORIZED, $exception->getHeaders());
         } else {
             $response = new JsonResponse([
                 'status' => 'error',
