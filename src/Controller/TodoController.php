@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\DTO\CreateTodoDTO;
 use App\DTO\UpdateTodoDTO;
 use App\Entity\Todo;
+use App\OptionsResolver\PaginatorOptionsResolver;
 use App\Repository\TodoRepository;
 use App\Service\Serializer\DTOSerializer;
 use Doctrine\ORM\EntityManagerInterface;
@@ -12,17 +13,31 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route("/api", "api_", format: "json")]
 class TodoController extends AbstractController
 {
     #[Route('/todos', name: 'todos', methods: ["GET"])]
-    public function index(TodoRepository $todoRepository): JsonResponse
+    public function index(
+        Request                  $request,
+        PaginatorOptionsResolver $paginatorOptionsResolver,
+        TodoRepository           $todoRepository,
+    ): JsonResponse
     {
-        $todos = $todoRepository->findAll();
+        try {
+            $queryParams = $paginatorOptionsResolver
+                ->configurePage()
+                ->resolve($request->query->all());
 
-        return $this->json($todos);
+            $todos = $todoRepository->findAllWithPagination($queryParams['page']);
+
+            return $this->json($todos);
+
+        } catch (\Exception $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
     }
 
     #[Route('/todos', name: 'create_todo', methods: ["POST"])]
