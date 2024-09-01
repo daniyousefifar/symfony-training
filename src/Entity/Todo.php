@@ -5,7 +5,6 @@ namespace App\Entity;
 use App\Repository\TodoRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: TodoRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -17,8 +16,6 @@ class Todo
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank]
-    #[Assert\Length(max: 255)]
     private ?string $title = null;
 
     #[ORM\Column]

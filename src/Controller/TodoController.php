@@ -2,21 +2,19 @@
 
 namespace App\Controller;
 
+use App\DTO\CreateTodoDTO;
+use App\DTO\UpdateTodoDTO;
 use App\Entity\Todo;
-use App\OptionsResolver\TodoOptionsResolver;
 use App\Repository\TodoRepository;
+use App\Service\Serializer\DTOSerializer;
 use Doctrine\ORM\EntityManagerInterface;
-use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Exception\ValidationFailedException;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
-#[Route("/api", "api_")]
+#[Route("/api", "api_", format: "json")]
 class TodoController extends AbstractController
 {
     #[Route('/todos', name: 'todos', methods: ["GET"])]
@@ -30,32 +28,25 @@ class TodoController extends AbstractController
     #[Route('/todos', name: 'create_todo', methods: ["POST"])]
     public function createTodo(
         Request                $request,
-        EntityManagerInterface $entityManager,
-        ValidatorInterface     $validator,
-        TodoOptionsResolver    $todoOptionsResolver
+        DTOSerializer          $serializer,
+        EntityManagerInterface $em,
     ): JsonResponse
     {
-        try {
-            $requestBody = json_decode($request->getContent(), true);
+        /** @var CreateTodoDTO $enquiry */
+        $enquiry = $serializer->deserialize(
+            $request->getContent(),
+            CreateTodoDTO::class,
+            'json',
+        );
 
-            $fields = $todoOptionsResolver->configureTitle(true)->resolve($requestBody);
+        $todo = new Todo();
+        $todo->setTitle($enquiry->getTitle());
 
-            $todo = new Todo();
-            $todo->setTitle($fields['title']);
+        $em->persist($todo);
 
-            $errors = $validator->validate($todo);
-            if (count($errors) > 0) {
-                throw new InvalidArgumentException((string)$errors);
-            }
+        $em->flush();
 
-            $entityManager->persist($todo);
-
-            $entityManager->flush();
-
-            return $this->json($todo, status: Response::HTTP_CREATED);
-        } catch (\Exception $e) {
-            throw new BadRequestHttpException($e->getMessage());
-        }
+        return $this->json($todo, Response::HTTP_CREATED);
     }
 
     #[Route("/todos/{id}", name: 'get_todo', methods: ["GET"])]
@@ -64,54 +55,35 @@ class TodoController extends AbstractController
         return $this->json($todo);
     }
 
-    #[Route("/todos/{id}", name: 'update_todo', methods: ["PATCH", "PUT"])]
+    #[Route("/todos/{id}", name: 'update_todo', methods: ["PUT"])]
     public function updateTodo(
-        Todo $todo,
-        Request $request,
-        TodoOptionsResolver $todoOptionsResolver,
-        ValidatorInterface $validator,
-        EntityManagerInterface $entityManager
-    )
+        Todo                   $todo,
+        Request                $request,
+        DTOSerializer          $serializer,
+        EntityManagerInterface $em
+    ): JsonResponse
     {
-        try {
-            $isPutMethod = $request->getMethod() === "PUT";
-            $requestBody = json_decode($request->getContent(), true);
+        /** @var UpdateTodoDTO $enquiry */
+        $enquiry = $serializer->deserialize(
+            $request->getContent(),
+            UpdateTodoDTO::class,
+            'json'
+        );
 
-            $fields = $todoOptionsResolver
-                ->configureTitle($isPutMethod)
-                ->configureCompleted($isPutMethod)
-                ->resolve($requestBody);
+        $todo->setTitle($enquiry->getTitle());
+        $todo->setCompleted($enquiry->isCompleted());
 
-            foreach ($fields as $field => $value) {
-                switch ($field) {
-                    case "title":
-                        $todo->setTitle($value);
-                        break;
-                    case "completed":
-                        $todo->setCompleted($value);
-                        break;
-                }
-            }
+        $em->flush();
 
-            $errors = $validator->validate($todo);
-            if (count($errors) > 0) {
-                throw new InvalidArgumentException((string)$errors);
-            }
-
-            $entityManager->flush();
-
-            return $this->json($todo);
-        } catch (\Exception $e) {
-            throw new BadRequestHttpException($e->getMessage());
-        }
+        return $this->json($todo);
     }
 
     #[Route("/todos/{id}", name: 'delete_todo', methods: ["DELETE"])]
-    public function deleteTodo(Todo $todo, EntityManagerInterface $entityManager): JsonResponse
+    public function deleteTodo(Todo $todo, EntityManagerInterface $em): JsonResponse
     {
-        $entityManager->remove($todo);
+        $em->remove($todo);
 
-        $entityManager->flush();
+        $em->flush();
 
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
